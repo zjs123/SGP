@@ -67,7 +67,7 @@ class BaseTask:
     def initialize_prompt(self):
         if self.task_train_type == 'MLP_finetune':
             self.prompt = MLP_finetune(self.input_dim).to(self.device)
-        elif self.task_train_type == 'label_prompt':
+        elif self.task_train_type == 'label_prompt': # SGP
             self.prompt = label_prompt_v1(self.hid_dim, self.output_dim, self.device).to(self.device)
         elif self.task_train_type == 'GPF':
             self.prompt = GPF(self.input_dim).to(self.device)
