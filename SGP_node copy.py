@@ -1,68 +1,3 @@
-'''
-No contrastive MI_max (use classification for MI max) ['Cora', 'sector_cat', 3, 7, '/home/jz875/project/label_prompt/pre_trained_model/Cora/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.6777, 0.0191]
-['Macro_F1', 0.661, 0.0222]
-['Micro_F1', 0.6777, 0.0191]
-['Weighted_F1', 0.6753, 0.0169]
-['ROC', 0.9094, 0.0178]
-['PRC', 0.6573, 0.0339]
-
-['Cora', 'sector_cat', 3, 7, '/home/jz875/project/label_prompt/pre_trained_model/Cora/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.7058, 0.0362]
-['Macro_F1', 0.6918, 0.0389]
-['Micro_F1', 0.7058, 0.0362]
-['Weighted_F1', 0.7073, 0.0345]
-['ROC', 0.9237, 0.0132]
-['PRC', 0.7496, 0.045]
-
-['Cora', 'sector_cat', 1, 7, '/home/jz875/project/label_prompt/pre_trained_model/Cora/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.6003, 0.0852]
-['Macro_F1', 0.591, 0.0771]
-['Micro_F1', 0.6003, 0.0852]
-['Weighted_F1', 0.6014, 0.0889]
-['ROC', 0.886, 0.0325]
-['PRC', 0.6623, 0.064]
-
-['Cora', 'sector_cat', 3, 3, '/home/jz875/project/label_prompt/pre_trained_model/Cora/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.6974, 0.0255]
-['Macro_F1', 0.6925, 0.0232]
-['Micro_F1', 0.6974, 0.0255]
-['Weighted_F1', 0.6925, 0.0232]
-['ROC', 0.8572, 0.0144]
-['PRC', 0.7536, 0.0246]
-
-['Cora', 'sector_cat', 1, 3, '/home/jz875/project/label_prompt/pre_trained_model/Cora/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.5881, 0.0921]
-['Macro_F1', 0.5746, 0.0962]
-['Micro_F1', 0.5881, 0.0921]
-['Weighted_F1', 0.5746, 0.0962]
-['ROC', 0.762, 0.0799]
-['PRC', 0.6132, 0.1162]
-
-['Computers', 'sector_cat', 3, 10, '/home/jz875/project/label_prompt/pre_trained_model/Computers/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.6346, 0.0751]
-['Macro_F1', 0.6201, 0.0679]
-['Micro_F1', 0.6346, 0.0751]
-['Weighted_F1', 0.5949, 0.0887]
-['ROC', 0.9329, 0.0218]
-['PRC', 0.754, 0.03]
-
-['Computers', 'sector_cat', 1, 10, '/home/jz875/project/label_prompt/pre_trained_model/Computers/text.GraphMAE.GCN.128.2.pth']
-['task_prompt', ['label', 'label', 'label', 'label', 'label']]
-['ACC', 0.5362, 0.0711]
-['Macro_F1', 0.5029, 0.0873]
-['Micro_F1', 0.5362, 0.0711]
-['Weighted_F1', 0.5111, 0.0851]
-['ROC', 0.8693, 0.0335]
-['PRC', 0.6011, 0.0578]
-'''
-
 import torch
 import random
 from torch_geometric.nn.inits import glorot
@@ -86,15 +21,8 @@ class label_prompt_node(torch.nn.Module):
         self.feature_prompt = torch.nn.Parameter(torch.Tensor(1, feature_dim))
         self.propagate_prompt = torch.nn.Parameter(torch.Tensor(1, 2*feature_dim))
         self.readout_prompt = torch.nn.Parameter(torch.Tensor(1, in_channels))
-
-        if self.dataset in ['PubMed']:
-            self.aggregate_function = global_max_pool
-        if self.dataset in ['squirrel']:
-            self.aggregate_function = global_add_pool
-        if self.dataset in ['Photo']:
-            self.aggregate_function = global_mean_pool
-        if self.dataset in ['Computers']:
-            self.aggregate_function = global_mean_pool
+            
+        self.aggregate_function = global_mean_pool
 
         if self.dataset in ['PubMed']:
             self.perturb_times = 5
@@ -119,40 +47,15 @@ class label_prompt_node(torch.nn.Module):
         torch.nn.init.xavier_uniform_(self.answering.weight)
 
     def get_critical_emb(self, gnn, x, edge_index, batch = None):
-        if self.dataset in ['PubMed']:
-            new_x = 0.1*self.feature_prompt + x
-            tmp_emb = gnn(new_x, edge_index)*self.readout_prompt
-        
-        if self.dataset in ['squirrel']:
-            new_x = 0.1*self.feature_prompt + x
-            tmp_emb = gnn(new_x, edge_index)*self.readout_prompt
-        
-        if self.dataset in ['Photo']:
-            new_x = self.feature_prompt + x
-            tmp_emb = gnn(new_x, edge_index)*self.readout_prompt
-        
-        if self.dataset in ['Computers']:
-            new_x = 0.1*self.feature_prompt + x
-            tmp_emb = gnn(new_x, edge_index)*self.readout_prompt
+        new_x = 0.1*self.feature_prompt + x
+        tmp_emb = gnn(new_x, edge_index)*self.readout_prompt
 
         return self.aggregate_function(tmp_emb, batch)
         
     def get_boundary_samples(self, data):
-        if self.dataset in ['PubMed']:
-            tmp_x = data.x + 0.1*F.normalize(torch.tanh(self.noise_matrix(data.x)), 1, -1)
-            tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
-        
-        if self.dataset in ['squirrel']:
-            tmp_x = data.x + 0.1*F.normalize(torch.tanh(self.noise_matrix(data.x)), 1, -1)
-            tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
-        
-        if self.dataset in ['Photo']:
-            tmp_x = data.x + F.normalize(F.relu(self.noise_matrix(data.x)), 1, -1)
-            tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
-        
-        if self.dataset in ['Computers']:
-            tmp_x = data.x + F.normalize(torch.tanh(self.noise_matrix(data.x)), 1, -1)
-            tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
+
+        tmp_x = data.x + F.normalize(torch.tanh(self.noise_matrix(data.x)), 1, -1)
+        tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
 
         return tmp_x, tmp_edge_index, data.batch
 
@@ -189,17 +92,8 @@ class label_prompt_node(torch.nn.Module):
         pos_distance = torch.norm(boundary_features_p - boundary_features, 2, -1)
         neg_distance = torch.norm(boundary_features_n - boundary_features, 2, -1)
        
-        if self.dataset in ['PubMed']:
-            noise_loss = 0.1*torch.sigmoid(-neg_distance).mean() + F.relu(neg_distance-pos_distance).mean() # 使同一类别内的干扰样本尽可能分散，从而触及边界; 同时同一类别的扰动样本距离应小于不同类别扰动样本
         
-        if self.dataset in ['squirrel']:
-            noise_loss = 0.1*torch.sigmoid(-neg_distance).mean() + F.relu(neg_distance-pos_distance).mean() # 使同一类别内的干扰样本尽可能分散，从而触及边界; 同时同一类别的扰动样本距离应小于不同类别扰动样本
-        
-        if self.dataset in ['Photo']:
-            noise_loss = 0.1*torch.sigmoid(-neg_distance).mean() + F.relu(neg_distance-pos_distance).mean() # 使同一类别内的干扰样本尽可能分散，从而触及边界; 同时同一类别的扰动样本距离应小于不同类别扰动样本
-        
-        if self.dataset in ['Computers']:
-            noise_loss = torch.sigmoid(-neg_distance).mean() + F.relu(neg_distance-pos_distance).mean() # 使同一类别内的干扰样本尽可能分散，从而触及边界; 同时同一类别的扰动样本距离应小于不同类别扰动样本
+        noise_loss = torch.sigmoid(-neg_distance).mean() + F.relu(neg_distance-pos_distance).mean() # 使同一类别内的干扰样本尽可能分散，从而触及边界; 同时同一类别的扰动样本距离应小于不同类别扰动样本
         
         # min_MI
         boundary_features_critical = boundary_features_critical.view(data.y.size(0), self.perturb_times, -1, self.in_channels) # batch_size(n_classes) | perturb_times | shot_num | emb_dim
@@ -208,17 +102,8 @@ class label_prompt_node(torch.nn.Module):
         pos_distance = torch.norm(boundary_features_critical_p - boundary_features_critical, 2, -1)
         neg_distance = torch.norm(boundary_features - boundary_features_critical, 2, -1)
         
-        if self.dataset in ['PubMed']:
-            min_loss = F.relu(neg_distance-pos_distance).mean()
-        
-        if self.dataset in ['squirrel']:
-            min_loss = F.relu(neg_distance-pos_distance).mean()
-        
-        if self.dataset in ['Photo']:
-            min_loss = F.relu(neg_distance-pos_distance+1).mean()
-        
-        if self.dataset in ['Computers']:
-            min_loss = F.relu(neg_distance-pos_distance).mean()
+       
+        min_loss = F.relu(neg_distance-pos_distance).mean()
 
         
         return max_loss, min_loss, noise_loss
