@@ -87,12 +87,7 @@ class label_prompt_graph(torch.nn.Module):
         self.propagate_prompt = torch.nn.Parameter(torch.Tensor(1, 2*feature_dim))
         self.readout_prompt = torch.nn.Parameter(torch.Tensor(1, in_channels))
 
-        if self.dataset in ['BZR', 'COX2']:
-            self.aggregate_function = global_mean_pool
-        if self.dataset in ['PROTEINS']:
-            self.aggregate_function = global_add_pool
-        if self.dataset in ['MUTAG']:
-            self.aggregate_function = global_max_pool
+        self.aggregate_function = global_max_pool
 
         if self.dataset in ['BZR', 'COX2', 'PROTEINS']:
             self.perturb_times = 10
@@ -122,12 +117,7 @@ class label_prompt_graph(torch.nn.Module):
     
     def get_boundary_samples(self, data):
         tmp_x = data.x + torch.tanh(self.noise_matrix(data.x))
-        if self.dataset in ['BZR', 'MUTAG']:
-            tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
-        if self.dataset in ['COX2']:
-            tmp_edge_index, _ = add_random_edge(data.edge_index, p = 0.01)
-        if self.dataset in ['PROTEINS']:
-            tmp_edge_index = data.edge_index
+        tmp_edge_index, _ = dropout_edge(data.edge_index, p = 0.1)
 
         return tmp_x, tmp_edge_index, data.batch
 
